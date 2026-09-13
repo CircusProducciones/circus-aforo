@@ -120,6 +120,18 @@
       padding: 40px;
     }
 
+    .sheet-modified {
+      margin-top: 14px;
+      font-size: 10px;
+      color: #444;
+      letter-spacing: 1px;
+      text-align: right;
+    }
+
+    .sheet-modified span {
+      color: #666;
+    }
+
     .updated {
       text-align: center;
       font-size: 10px;
@@ -211,6 +223,16 @@
             <span class="total-qty">${ev.total.toLocaleString('es-AR')}</span>
           `;
           card.appendChild(total);
+
+          if (ev.modifiedTime) {
+            const mod = document.createElement('div');
+            mod.className = 'sheet-modified';
+            const d = new Date(ev.modifiedTime);
+            const fecha = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const hora  = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+            mod.innerHTML = `Última actualización: <span>${fecha} ${hora}</span>`;
+            card.appendChild(mod);
+          }
 
           grid.appendChild(card);
         }
