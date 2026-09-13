@@ -89,15 +89,14 @@ module.exports = async (req, res) => {
       const [id, nombre, activo] = row;
       if (!id || (activo || '').toUpperCase() !== 'TRUE') continue;
 
-      // Leer J1:K4 del sheet del evento
+      // Leer J1:K5 del sheet del evento (J5 = última actualización)
       const data = await get(
-        `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/J1:K4`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/J1:K5`,
         token
       );
 
       const rows = data.values || [];
       const titulo = rows[0]?.[0] || nombre;
-      const fecha = rows[0]?.[1] || '';
 
       const tandas = [];
       for (let i = 1; i <= 2; i++) {
@@ -110,15 +109,9 @@ module.exports = async (req, res) => {
       }
 
       const total = parseInt(rows[3]?.[1]) || 0;
+      const ultimaActualizacion = rows[4]?.[0] || null;
 
-      // Última modificación del sheet via Drive API
-      const driveData = await get(
-        `https://www.googleapis.com/drive/v3/files/${id}?fields=modifiedTime`,
-        token
-      );
-      const modifiedTime = driveData.modifiedTime || null;
-
-      eventos.push({ titulo, fecha, tandas, total, modifiedTime });
+      eventos.push({ titulo, tandas, total, ultimaActualizacion });
     }
 
     res.json({ ok: true, eventos, updatedAt: new Date().toISOString() });
