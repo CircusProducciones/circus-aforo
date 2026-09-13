@@ -6,7 +6,7 @@ function makeJWT(creds) {
   const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
   const payload = Buffer.from(JSON.stringify({
     iss: creds.client_email,
-    scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+    scope: 'https://www.googleapis.com/auth/spreadsheets.readonly https://www.googleapis.com/auth/drive.readonly',
     aud: 'https://oauth2.googleapis.com/token',
     exp: now + 3600,
     iat: now,
@@ -111,7 +111,14 @@ module.exports = async (req, res) => {
 
       const total = parseInt(rows[3]?.[1]) || 0;
 
-      eventos.push({ titulo, fecha, tandas, total });
+      // Última modificación del sheet via Drive API
+      const driveData = await get(
+        `https://www.googleapis.com/drive/v3/files/${id}?fields=modifiedTime`,
+        token
+      );
+      const modifiedTime = driveData.modifiedTime || null;
+
+      eventos.push({ titulo, fecha, tandas, total, modifiedTime });
     }
 
     res.json({ ok: true, eventos, updatedAt: new Date().toISOString() });
