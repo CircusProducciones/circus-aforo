@@ -224,13 +224,10 @@
           `;
           card.appendChild(total);
 
-          if (ev.modifiedTime) {
+          if (ev.ultimaActualizacion) {
             const mod = document.createElement('div');
             mod.className = 'sheet-modified';
-            const d = new Date(ev.modifiedTime);
-            const fecha = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const hora  = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-            mod.innerHTML = `Última actualización: <span>${fecha} ${hora}</span>`;
+            mod.innerHTML = `Última actualización: <span>${ev.ultimaActualizacion}</span>`;
             card.appendChild(mod);
           }
 
