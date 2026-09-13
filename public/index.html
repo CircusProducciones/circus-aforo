@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aforo — Circus</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      color: #f0f0f0;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      min-height: 100vh;
+      padding: 32px 16px 64px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 13px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
+    header p {
+      font-size: 11px;
+      color: #555;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #161616;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .card-title {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #c8a96e;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .tanda {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .tanda:last-of-type {
+      border-bottom: none;
+    }
+
+    .tanda-nombre {
+      font-size: 12px;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .tanda-qty {
+      font-size: 20px;
+      font-weight: 700;
+      color: #f0f0f0;
+    }
+
+    .total-row {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .total-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    .total-qty {
+      font-size: 28px;
+      font-weight: 700;
+      color: #c8a96e;
+    }
+
+    .loading {
+      text-align: center;
+      color: #444;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 80px 0;
+    }
+
+    .error {
+      text-align: center;
+      color: #c0392b;
+      font-size: 12px;
+      padding: 40px;
+    }
+
+    .updated {
+      text-align: center;
+      font-size: 10px;
+      color: #333;
+      margin-top: 40px;
+      letter-spacing: 1px;
+    }
+
+    .refresh-btn {
+      display: block;
+      margin: 24px auto 0;
+      background: none;
+      border: 1px solid #2a2a2a;
+      color: #555;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover {
+      border-color: #c8a96e;
+      color: #c8a96e;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Circus — Aforo</h1>
+    <p id="subtitle">Cargando...</p>
+  </header>
+
+  <div id="root"></div>
+
+  <script>
+    const API = '/api/aforo';
+
+    async function load() {
+      const root = document.getElementById('root');
+      const subtitle = document.getElementById('subtitle');
+      root.innerHTML = '<div class="loading">Cargando eventos...</div>';
+
+      try {
+        const res = await fetch(API);
+        const data = await res.json();
+
+        if (!data.ok) throw new Error(data.error);
+
+        const { eventos, updatedAt } = data;
+
+        if (!eventos.length) {
+          root.innerHTML = '<div class="loading">No hay eventos activos</div>';
+          subtitle.textContent = '';
+          return;
+        }
+
+        subtitle.textContent = `${eventos.length} evento${eventos.length > 1 ? 's' : ''} en venta`;
+
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+
+        for (const ev of eventos) {
+          const card = document.createElement('div');
+          card.className = 'card';
+
+          const title = document.createElement('div');
+          title.className = 'card-title';
+          title.textContent = ev.titulo;
+          card.appendChild(title);
+
+          for (const t of ev.tandas) {
+            const row = document.createElement('div');
+            row.className = 'tanda';
+            row.innerHTML = `
+              <span class="tanda-nombre">${t.tipo}</span>
+              <span class="tanda-qty">${t.cantidad.toLocaleString('es-AR')}</span>
+            `;
+            card.appendChild(row);
+          }
+
+          const total = document.createElement('div');
+          total.className = 'total-row';
+          total.innerHTML = `
+            <span class="total-label">Total</span>
+            <span class="total-qty">${ev.total.toLocaleString('es-AR')}</span>
+          `;
+          card.appendChild(total);
+
+          grid.appendChild(card);
+        }
+
+        root.innerHTML = '';
+        root.appendChild(grid);
+
+        const updated = document.createElement('p');
+        updated.className = 'updated';
+        const d = new Date(updatedAt);
+        updated.textContent = `Actualizado ${d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`;
+        root.appendChild(updated);
+
+        const btn = document.createElement('button');
+        btn.className = 'refresh-btn';
+        btn.textContent = 'Actualizar';
+        btn.onclick = load;
+        root.appendChild(btn);
+
+      } catch (e) {
+        root.innerHTML = `<div class="error">Error al cargar los datos: ${e.message}</div>`;
+        subtitle.textContent = '';
+      }
+    }
+
+    load();
+  </script>
+
+</body>
+</html>
