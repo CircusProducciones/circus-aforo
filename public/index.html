@@ -76,10 +76,39 @@
       letter-spacing: 1px;
     }
 
+    .tanda-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
     .tanda-qty {
       font-size: 20px;
       font-weight: 700;
       color: #f0f0f0;
+    }
+
+    .tanda-pct {
+      font-size: 10px;
+      color: #666;
+      letter-spacing: 1px;
+    }
+
+    .pct-bar-wrap {
+      width: 100%;
+      height: 3px;
+      background: #1e1e1e;
+      border-radius: 2px;
+      margin-top: 6px;
+      margin-bottom: 4px;
+    }
+
+    .pct-bar {
+      height: 3px;
+      border-radius: 2px;
+      background: #c8a96e;
+      transition: width 0.4s ease;
     }
 
     .total-row {
@@ -209,18 +238,30 @@
           for (const t of ev.tandas) {
             const row = document.createElement('div');
             row.className = 'tanda';
+            const pctText = t.pct !== null ? `${t.vendidos.toLocaleString('es-AR')} / ${t.capacidad.toLocaleString('es-AR')}` : t.vendidos.toLocaleString('es-AR');
+            const pctLabel = t.pct !== null ? `${t.pct}%` : '';
             row.innerHTML = `
               <span class="tanda-nombre">${t.tipo}</span>
-              <span class="tanda-qty">${t.cantidad.toLocaleString('es-AR')}</span>
+              <div class="tanda-right">
+                <span class="tanda-qty">${pctText}</span>
+                <span class="tanda-pct">${pctLabel}</span>
+              </div>
             `;
             card.appendChild(row);
+            if (t.pct !== null) {
+              const bar = document.createElement('div');
+              bar.className = 'pct-bar-wrap';
+              bar.innerHTML = `<div class="pct-bar" style="width:${Math.min(t.pct,100)}%"></div>`;
+              card.appendChild(bar);
+            }
           }
 
           const total = document.createElement('div');
           total.className = 'total-row';
+          const totalPctText = ev.totalPct !== null ? ` <span style="font-size:13px;color:#888;font-weight:400">${ev.totalPct}%</span>` : '';
           total.innerHTML = `
-            <span class="total-label">Total</span>
-            <span class="total-qty">${ev.total.toLocaleString('es-AR')}</span>
+            <span class="total-label">Total${ev.totalCapacidad ? ' / ' + ev.totalCapacidad.toLocaleString('es-AR') : ''}</span>
+            <span class="total-qty">${ev.totalVendidos.toLocaleString('es-AR')}${totalPctText}</span>
           `;
           card.appendChild(total);
 

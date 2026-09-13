@@ -89,9 +89,9 @@ module.exports = async (req, res) => {
       const [id, nombre, activo] = row;
       if (!id || (activo || '').toUpperCase() !== 'TRUE') continue;
 
-      // Leer J1:K5 del sheet del evento (J5 = última actualización)
+      // Leer J1:L5 del sheet del evento (K=vendidos, L=capacidad, J5=última actualización)
       const data = await get(
-        `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/J1:K5`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/J1:L5`,
         token
       );
 
@@ -101,17 +101,19 @@ module.exports = async (req, res) => {
       const tandas = [];
       for (let i = 1; i <= 2; i++) {
         if (rows[i]?.[0]) {
-          tandas.push({
-            tipo: rows[i][0],
-            cantidad: parseInt(rows[i][1]) || 0,
-          });
+          const vendidos  = parseInt(rows[i][1]) || 0;
+          const capacidad = parseInt(rows[i][2]) || 0;
+          const pct = capacidad > 0 ? Math.round(vendidos / capacidad * 100) : null;
+          tandas.push({ tipo: rows[i][0], vendidos, capacidad, pct });
         }
       }
 
-      const total = parseInt(rows[3]?.[1]) || 0;
+      const totalVendidos  = parseInt(rows[3]?.[1]) || 0;
+      const totalCapacidad = parseInt(rows[3]?.[2]) || 0;
+      const totalPct = totalCapacidad > 0 ? Math.round(totalVendidos / totalCapacidad * 100) : null;
       const ultimaActualizacion = rows[4]?.[0] || null;
 
-      eventos.push({ titulo, tandas, total, ultimaActualizacion });
+      eventos.push({ titulo, tandas, totalVendidos, totalCapacidad, totalPct, ultimaActualizacion });
     }
 
     res.json({ ok: true, eventos, updatedAt: new Date().toISOString() });
