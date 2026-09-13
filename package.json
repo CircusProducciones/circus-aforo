@@ -1,0 +1,8 @@
+{
+  "name": "circus-aforo",
+  "version": "1.0.0",
+  "description": "Aforo en tiempo real — Circus Producciones",
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "api/aforo.js": {
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    { "source": "/api/aforo", "destination": "/api/aforo" },
+    { "source": "/(.*)", "destination": "/public/index.html" }
+  ]
+}
