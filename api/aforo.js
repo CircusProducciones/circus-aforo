@@ -89,9 +89,9 @@ module.exports = async (req, res) => {
       const [id, nombre, activo] = row;
       if (!id || (activo || '').toUpperCase() !== 'TRUE') continue;
 
-      // Leer J1:L5 del sheet del evento (K=vendidos, L=capacidad, J5=última actualización)
+      // Leer J1:L10 — soporta hasta 8 tandas + fila TOTAL + última actualización
       const data = await get(
-        `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/J1:L5`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/J1:L10`,
         token
       );
 
@@ -99,7 +99,16 @@ module.exports = async (req, res) => {
       const titulo = rows[0]?.[0] || nombre;
 
       const tandas = [];
-      for (let i = 1; i <= 2; i++) {
+      let totalVendidos = 0, totalCapacidad = 0, ultimaActualizacion = null;
+
+      for (let i = 1; i < rows.length; i++) {
+        const label = (rows[i]?.[0] || '').toString().trim().toUpperCase();
+        if (label === 'TOTAL') {
+          totalVendidos  = parseInt(rows[i][1]) || 0;
+          totalCapacidad = parseInt(rows[i][2]) || 0;
+          ultimaActualizacion = rows[i + 1]?.[0] || null;
+          break;
+        }
         if (rows[i]?.[0]) {
           const vendidos  = parseInt(rows[i][1]) || 0;
           const capacidad = parseInt(rows[i][2]) || 0;
@@ -108,10 +117,7 @@ module.exports = async (req, res) => {
         }
       }
 
-      const totalVendidos  = parseInt(rows[3]?.[1]) || 0;
-      const totalCapacidad = parseInt(rows[3]?.[2]) || 0;
       const totalPct = totalCapacidad > 0 ? Math.round(totalVendidos / totalCapacidad * 100) : null;
-      const ultimaActualizacion = rows[4]?.[0] || null;
 
       eventos.push({ titulo, tandas, totalVendidos, totalCapacidad, totalPct, ultimaActualizacion });
     }
